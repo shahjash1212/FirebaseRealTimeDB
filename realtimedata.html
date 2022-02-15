@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RealTimeDB</title>
+  </head>
+  <body>
+    <label for="">Name:</label><br />
+    <input type="text" id="name" /><br />
+    <label for="">Salary</label><br />
+    <input type="number" id="salary" /><br />
+    <label for="">PhoneNO:</label><br />
+    <input type="number" id="number" />
+
+    <br />
+    <br />
+    <button id="Insbtn">Insert</button>
+    <button id="Selbtn">Select</button>
+    <button id="Updbtn">Update</button>
+    <button id="Delbtn">Delete</button>
+
+    <table border="1px">
+      <tr>
+        
+        <th>Name</th>
+        <th>Slary</th>
+        <th>PhonNO</th>
+        
+
+      </tr>
+      <tbody id="table"></tbody>
+    </table>
+
+    <!--*firebase import -->
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-analytics.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyDDdGZpRzMwu_JkM5swOARqyn2ugIr-KcE",
+        authDomain: "fir-crud-a63f6.firebaseapp.com",
+        projectId: "fir-crud-a63f6",
+        storageBucket: "fir-crud-a63f6.appspot.com",
+        messagingSenderId: "163708641649",
+        appId: "1:163708641649:web:530db59ac9d729df8a16d0",
+        measurementId: "G-TR5RJXPPZ3",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+
+      import {
+        getDatabase,
+        ref,
+        get,
+        set,
+        child,
+        update,
+        remove,
+        onValue,
+      } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js";
+
+    
+
+      var employee
+
+
+      const db = getDatabase();
+
+      var name = document.getElementById("name");
+      var salary = document.getElementById("salary");
+      var number = document.getElementById("number");
+
+      var insBtn = document.getElementById("Insbtn");
+      var selBtn = document.getElementById("Selbtn");
+      var updBtn = document.getElementById("Updbtn");
+      var delBtn = document.getElementById("Delbtn");
+
+      var tbody = document.getElementById("table");
+
+      var id = 0;
+    
+
+      function AddAllItemsToTable(employee) {
+        tbody.innerHTML = " ";
+
+        employee.forEach((element) => {
+          AddItemToTable(element.Name, element.Salary, element.PhoneNO);
+        });
+      }
+
+    //   console.log(employee)
+    //   for(var i=0; i< employee.length;i++){
+
+    //   }
+
+
+      //realtime data
+      function GetAllDataRT () {
+        const dbRef = ref(db,"employee");
+        
+        onValue(dbRef,(snapshot) => {
+            var employee =[];
+            var i=0;
+            snapshot.forEach(childSnapshot =>{
+               
+                employee.push(childSnapshot.val());
+                i++;
+                console.log(i)
+            });
+            AddAllItemsToTable(employee);
+            console.log(employee)
+        })
+
+      }
+      window.onload = GetAllDataRT();
+
+
+
+      function AddItemToTable(name, salary, number) {
+        let trow = document.createElement("tr");
+        // let td1 = document.createElement("td");
+        let td2 = document.createElement("td");
+        let td3 = document.createElement("td");
+        let td4 = document.createElement("td");
+        let td5 = document.createElement("td");
+
+        // td1.innerHTML = ++id;
+        // console.log(id);
+
+        td2.innerHTML = name;
+
+        td3.innerHTML = salary;
+        td4.innerHTML = number;
+
+        td5.innerHTML = `<button onClick='SelectData()'>Edit</button> <button id onClick="DeleteData()">Delete</button>`;
+
+        // trow.appendChild(td1);
+        trow.appendChild(td2);
+        trow.appendChild(td3);
+        trow.appendChild(td4);
+        trow.appendChild(td5);
+
+    
+
+
+        tbody.appendChild(trow);
+      }
+
+
+
+      //getting the data
+
+    //   function GetAllDataOnce() {
+    //     const dbRef = ref(db);
+
+    //     get(child(dbRef, "employee")).then((snapshot) => {
+    //       var employee = [];
+
+    //       snapshot.forEach((childSnapshot) => {
+    //         employee.push(childSnapshot.val());
+    //       });
+
+    //       AddAllItemsToTable(employee);
+    //       console.log(employee);
+    //     });
+    //   }
+    //   window.onload = GetAllDataOnce();
+
+
+      
+
+      function InsertData() {
+        console.log(InsertData);
+        set(ref(db, "employee/" + name.value), {
+          Name: name.value,
+          Salary: salary.value,
+          PhoneNO: number.value,
+        })
+          .then(() => {
+            alert("data stored successfully");
+          })
+          .catch((error) => {
+            alert("some error in insert" + error);
+          });
+        reset();
+      }
+
+      insBtn.addEventListener("click", InsertData);
+      selBtn.addEventListener("click", SelectData);
+      updBtn.addEventListener("click", UpdateData);
+      delBtn.addEventListener("click", DeleteData);
+
+      //Select The data function
+
+      function SelectData(i) {
+        const dbref = ref(db);
+
+        get(child(dbref, "employee/" + name.value))
+          .then((snapshot) => {
+            if (snapshot.exists()) {
+              number.value = snapshot.val().PhoneNO;
+              name.value = snapshot.val().Name;
+              salary.value = snapshot.val().Salary;
+            } else {
+              alert("nodata found");
+            }
+          })
+          .catch((error) => {
+            alert(error + "error msg");
+          });
+        reset();
+      }
+
+      //Updating the data
+      function UpdateData() {
+        update(ref(db, "employee/" + name.value), {
+          Name: name.value,
+          Salary: salary.value,
+          PhoneNO: number.value,
+        })
+          .then(() => {
+            alert("data updated successfully");
+          })
+          .catch((error) => {
+            alert("some error in update" + error);
+          });
+        reset();
+      }
+
+      //Deleting the data
+      function DeleteData() {
+        remove(ref(db, "employee/" + name.value), {})
+          .then(() => {
+            alert("data deleted successfully");
+          })
+          .catch((error) => {
+            alert("some error in delete" + error);
+          });
+        reset();
+      }
+
+      function reset() {
+        document.getElementById("number").value = " ";
+        document.getElementById("name").value = " ";
+        document.getElementById("salary").value = " ";
+      }
+    </script>
+  </body>
+</html>
